@@ -1,0 +1,99 @@
+replicaCount: 2
+
+image:
+  repository: 234401909199.dkr.ecr.eu-west-1.amazonaws.com/demo-app
+  pullPolicy: IfNotPresent
+  tag: ""
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  automount: true
+  annotations: {}
+  name: ""
+
+containerPort: 8080
+
+service:
+  type: ClusterIP
+  port: 8080
+
+configMap:
+  data: {}
+
+probes:
+  liveness:
+    enabled: true
+    httpGet:
+      path: /api/status
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+  readiness:
+    enabled: true
+    httpGet:
+      path: /api/status
+      port: http
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    successThreshold: 1
+    failureThreshold: 3
+
+ingress:
+  enabled: false
+  className: "alb"
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+  hosts:
+    - host: demo.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+nodeSelector:
+  # Uncomment one of the following to run on specific architecture
+  # node.kubernetes.io/architecture: "arm64"
+  # node.kubernetes.io/architecture: "amd64"
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+secretProviderClass:
+  enabled: false
+  secretName: "demo-app/secrets"
+  jmesPath:
+    - path: "database.username"
+      alias: "DB_USERNAME"
+    - path: "database.password"
+      alias: "DB_PASSWORD"
+    - path: "api.key"
+      alias: "API_KEY"
+    - path: "redis.password"
+      alias: "REDIS_PASSWORD"
+
+tolerations: []
+
+affinity: {}
